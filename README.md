@@ -1,16 +1,38 @@
-## Hi there 👋
+pipeline {
+  agent none
 
-<!--
-**Giree008/giree008** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+  stages {
 
-Here are some ideas to get you started:
+    stage('Backend Build') {
+      agent {
+        docker { image 'maven:3.8.1-adoptopenjdk-11' }
+      }
+      steps {
+        dir('backend') {
+          sh 'mvn clean package'
+        }
+      }
+    }
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+    stage('Frontend Build') {
+      agent {
+        docker { image 'node:16-alpine' }
+      }
+      steps {
+        dir('frontend') {
+          sh 'npm install'
+          sh 'npm test'
+          sh 'npm run build'
+        }
+      }
+    }
+
+    stage('Docker Image Build') {
+      agent any
+      steps {
+        sh 'docker build -t backend-app backend'
+        sh 'docker build -t frontend-app frontend'
+      }
+    }
+  }
+}
